@@ -6,8 +6,6 @@ uniform float lines_y1 = 57;
 uniform float lines_x2 = 133;
 uniform float lines_y2 = 64;
 
-
-
 float4 line_box() { return float4(lines_x1 / 256.0, lines_x2 / 256.0, 
                                   lines_y1 / 224.0, lines_y2 / 224.0);}
 float4 line_box2() { 
@@ -48,18 +46,19 @@ float2 inbox_lerp(float2 perc, float4 box)
 }
 
 
-float myDiff(float4 a, float4 b)
+float myDiff(float a, float b)
 {
-    return (a.r - b.r) * (a.r - b.r);
+    return (a - b) * (a - b);
 }
 
 float score_pixel (float4 raw_box, int row, int col, float2 start_raw, float2 start_ref, float2 raw_pix_size, float2 ref_pix_size)
 {
     float4 raw_colour = image.Sample(textureSampler, float2(start_raw.x + col*raw_pix_size.x,
-                                                            start_raw.y + row*raw_pix_size.y));           
+                                                            start_raw.y + row*raw_pix_size.y));   
+                                                                   
     float4 ref_colour = block_image.Sample(textureSampler, float2(start_ref.x + col*ref_pix_size.x,
                                                                   start_ref.y + row*ref_pix_size.y));
-    return myDiff(raw_colour, ref_colour);                                                                
+    return myDiff(raw_colour.r, ref_colour.r);                                                                
 }
 
 float score_row (float4 raw_box, int row, float2 start_raw, float2 start_ref, float2 raw_pix_size, float2 ref_pix_size)
@@ -117,68 +116,33 @@ float score_number(float4 raw_box, int i)
 int score_all(float4 raw_box)
 {
     int result = 0;
-    int min_score = 1000000;
+    int min_score = score_number(raw_box, 0);
     
-    float score;
-    score = score_number(raw_box, 0);    
-    min_score = score;
+    float scores[10];
+    
+    scores[1] = score_number(raw_box, 1);
+    scores[2] = score_number(raw_box, 2);
+    scores[3] = score_number(raw_box, 3);
+    scores[4] = score_number(raw_box, 4);
+    scores[5] = score_number(raw_box, 5);
+    scores[6] = score_number(raw_box, 6);
+    scores[7] = score_number(raw_box, 7);
+    scores[8] = score_number(raw_box, 8);
+    scores[9] = score_number(raw_box, 9);
+
+    //unroll time.    
+    if (scores[1] < min_score){ min_score = scores[1]; result = 1;}
+    if (scores[2] < min_score){ min_score = scores[2]; result = 2;}
+    if (scores[3] < min_score){ min_score = scores[3]; result = 3;}
+    if (scores[4] < min_score){ min_score = scores[4]; result = 4;}
+    if (scores[5] < min_score){ min_score = scores[5]; result = 5;}
+    if (scores[6] < min_score){ min_score = scores[6]; result = 6;}
+    if (scores[7] < min_score){ min_score = scores[7]; result = 7;}
+    if (scores[8] < min_score){ min_score = scores[8]; result = 8;}
+    if (scores[9] < min_score){ min_score = scores[9]; result = 9;}
     
     
-    score = score_number(raw_box, 1);
-    if (score < min_score)
-    {
-        result = 1;
-        min_score = score;
-    }
     
-    score = score_number(raw_box, 2);
-    if (score < min_score)
-    {
-        result = 2;
-        min_score = score;
-    }
-    score = score_number(raw_box, 3);
-    if (score < min_score)
-    {
-        result = 3;
-        min_score = score;
-    }
-    score = score_number(raw_box, 4);
-    if (score < min_score)
-    {
-        result = 4;
-        min_score = score;
-    }
-    score = score_number(raw_box, 5);
-    if (score < min_score)
-    {
-        result = 5;
-        min_score = score;
-    }
-    score = score_number(raw_box, 6);
-    if (score < min_score)
-    {
-        result = 6;
-        min_score = score;
-    }
-    score = score_number(raw_box, 7);
-    if (score < min_score)
-    {
-        result = 7;
-        min_score = score;
-    }
-    score = score_number(raw_box, 8);
-    if (score < min_score)
-    {
-        result = 8;
-        min_score = score;
-    }
-    score = score_number(raw_box, 9);
-    if (score < min_score)
-    {
-        result = 9;
-        min_score = score;
-    }
     if (min_score > 5)
     {
         return -1;
